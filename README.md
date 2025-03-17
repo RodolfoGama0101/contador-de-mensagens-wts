@@ -1,2 +1,2 @@
-# contador-de-mensagens-wts
-Contador de Mensagens de Whatsapp
+# Contador De Mensagens de Whatsapp
+Um simples contador...
