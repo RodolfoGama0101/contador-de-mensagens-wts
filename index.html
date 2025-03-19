@@ -1,26 +1,70 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contador de Mensagens do WhatsApp</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            margin: 40px;
             background-color: #f4f4f4;
         }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100vh;
+            padding: 20px;
+        }
+
         h2 {
             color: #333;
         }
-        input {
-            margin: 20px 0;
+
+        .busca {
+            width: 65%;
         }
+
+        #buscaTexto {
+            margin: 10px 0;
+            padding: 8px;
+            width: 50%;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 8px 15px;
+            font-size: 16px;
+            border: none;
+            background: #e60000;
+            /* Vermelho mais romântico */
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background: #b30000;
+            /* Vermelho mais escuro */
+        }
+
         #resultado {
             margin-top: 20px;
             text-align: left;
-            max-width: 400px;
+            max-width: 500px;
+            width: 400px;
             margin-left: auto;
             margin-right: auto;
             background: #fff;
@@ -28,49 +72,97 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+
         .mensagem {
             font-size: 18px;
             padding: 5px;
             border-bottom: 1px solid #ddd;
         }
+
         .mensagem:last-child {
             border-bottom: none;
         }
+
         .total {
             font-weight: bold;
             font-size: 20px;
-            color: #007bff;
+            color: #e60000;
+            /* Vermelho mais romântico */
             margin-top: 10px;
             padding: 10px;
-            background: #e6f2ff;
+            background: #ffcccc;
+            /* Fundo vermelho claro */
             border-radius: 5px;
             text-align: center;
         }
+
+        h3 {
+            padding-left: 5px;
+        }
+
+        .termo {
+            color: #e60000;
+            /* Vermelho mais romântico */
+        }
+
+        /* Media queries para dispositivos móveis */
+        @media (max-width: 600px) {
+            .busca {
+                width: 90%;
+            }
+
+            #buscaTexto {
+                width: 80%;
+            }
+
+            #resultado {
+                width: 100%;
+                padding: 10px;
+            }
+
+            .mensagem {
+                font-size: 16px;
+            }
+
+            .total {
+                font-size: 18px;
+            }
+        }
     </style>
 </head>
+
 <body>
 
-    <h2>Contador de Mensagens do WhatsApp</h2>
-    <input type="file" id="arquivo" accept=".txt">
-    <div id="resultado"></div>
+    <div class="container">
+        <h2>Contador de Mensagens Mariana & Rodolfo</h2>
+        <div class="busca">
+            <input type="text" id="buscaTexto" placeholder="Digite o texto para buscar...">
+            <button onclick="buscarTexto()">Buscar</button>
+        </div>
+        <div id="resultado"></div>
+    </div>
+
 
     <script>
-        document.getElementById("arquivo").addEventListener("change", function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+        const arquivoTxt = "chat-mariana.txt"; // Nome do arquivo fixo
+        let conteudoArquivo = ""; // Armazena o conteúdo do arquivo
+        let contagemMensagens = {}; // Armazena a contagem de mensagens por pessoa
+        let totalMensagens = 0; // Armazena o total de mensagens
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const texto = e.target.result;
-                contarMensagens(texto);
-            };
-            reader.readAsText(file, "UTF-8");
-        });
+        async function carregarArquivo() {
+            try {
+                const resposta = await fetch(arquivoTxt);
+                conteudoArquivo = await resposta.text();
+                contarMensagens(conteudoArquivo);
+            } catch (erro) {
+                console.error("Erro ao carregar o arquivo:", erro);
+            }
+        }
 
         function contarMensagens(texto) {
             const padraoMensagem = /^\d{1,2}\/\d{1,2}\/\d{2}, \d{2}:\d{2} - (.*?):/;
-            const contagemMensagens = {};
-            let totalMensagens = 0;
+            contagemMensagens = {};
+            totalMensagens = 0;
 
             const linhas = texto.split("\n");
             linhas.forEach(linha => {
@@ -78,11 +170,39 @@
                 if (match) {
                     const nome = match[1];
                     contagemMensagens[nome] = (contagemMensagens[nome] || 0) + 1;
-                    totalMensagens++; // Incrementa o total de mensagens
+                    totalMensagens++;
                 }
             });
 
             exibirResultado(contagemMensagens, totalMensagens);
+        }
+
+        function buscarTexto() {
+            const termo = document.getElementById("buscaTexto").value.toLowerCase().trim();
+            if (!termo) {
+                exibirResultado(contagemMensagens, totalMensagens);
+                return;
+            }
+
+            const padraoMensagem = /^\d{1,2}\/\d{1,2}\/\d{2}, \d{2}:\d{2} - (.*?): (.*)$/;
+            const ocorrencias = {};
+            let totalOcorrencias = 0;
+
+            const linhas = conteudoArquivo.split("\n");
+            linhas.forEach(linha => {
+                const match = linha.match(padraoMensagem);
+                if (match) {
+                    const nome = match[1];
+                    const mensagem = match[2].toLowerCase();
+
+                    if (mensagem.includes(termo)) {
+                        ocorrencias[nome] = (ocorrencias[nome] || 0) + 1;
+                        totalOcorrencias++;
+                    }
+                }
+            });
+
+            exibirBusca(ocorrencias, totalOcorrencias);
         }
 
         function exibirResultado(contagem, total) {
@@ -96,13 +216,37 @@
                 resultadoDiv.appendChild(div);
             });
 
-            // Adiciona o total de mensagens no final
             const totalDiv = document.createElement("div");
             totalDiv.classList.add("total");
             totalDiv.textContent = `Total de mensagens: ${total}`;
             resultadoDiv.appendChild(totalDiv);
         }
+
+        function exibirBusca(ocorrencias, total) {
+            const resultadoDiv = document.getElementById("resultado");
+            const inputValue = document.getElementById("buscaTexto").value;
+            resultadoDiv.innerHTML = `<h3>Ocorrências do termo <span class="termo">${inputValue}</span>:</h3>`;
+
+            Object.entries(ocorrencias).forEach(([nome, qtd]) => {
+                const div = document.createElement("div");
+                div.classList.add("mensagem");
+                div.textContent = `${nome}: ${qtd} vezes`;
+                resultadoDiv.appendChild(div);
+            });
+
+            const totalDiv = document.createElement("div");
+            totalDiv.classList.add("total");
+            totalDiv.textContent = `Total de ocorrências: ${total}`;
+            resultadoDiv.appendChild(totalDiv);
+
+            if (inputValue == "") {
+                exibirResultado(contagemMensagens, totalMensagens);
+            }
+        }
+
+        carregarArquivo();
     </script>
 
 </body>
+
 </html>
